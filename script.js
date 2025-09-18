@@ -2,7 +2,7 @@
 (function() {
     'use strict';
 
-    // Love notes to display - fixed and expanded
+    // Love notes to display - expanded with more sweet messages
     const loveNotes = [
         "If I could, I'd plant a thousand lilies just to see you smile.",
         "You're the softest part of my day, even when the world feels rough.",
@@ -18,7 +18,23 @@
         "You're my favorite hello and my hardest goodbye.",
         "With you, every moment feels like a warm sunny day in the garden.",
         "Your heart is the most beautiful flower in this entire garden.",
-        "Like Woodstock to Snoopy, you're my perfect companion in life."
+        "Like Woodstock to Snoopy, you're my perfect companion in life.",
+        "You're the reason my heart feels like a cozy blanket on cold nights.",
+        "If love had a color, it would be the exact shade of your eyes.",
+        "You make my soul feel like it's floating on cotton candy clouds.",
+        "Every day with you is like finding a four-leaf clover in my pocket.",
+        "You're my favorite notification, my sweetest daydream.",0
+        "If I could bottle your laugh, I'd keep it for rainy days.",
+        "You make ordinary Tuesday mornings feel like Christmas morning.",
+        "Your hugs are my favorite place to get lost in this whole world.",
+        "You're the reason I believe in fairy tales and happy endings.",
+        "Like honey dripping from a spoon, your love sweetens everything.",
+        "You're my favorite kind of chaos and my most peaceful calm.",
+        "If stars could talk, they'd all whisper your name at midnight.",
+        "You make my heart skip like stones across a gentle lake.",
+        "You're the bookmark in my favorite chapter of life.",
+        "I'm madly in love with you chloé ",
+        "Your love feels like warm cookies and Sunday morning sunshine."
     ];
 
     // Lily emoji variations - unique types only
@@ -114,15 +130,31 @@
         const delay = Math.random() * 3;
         lily.style.animationDelay = `-${delay}s`;
         
-        // Event listeners
-        lily.addEventListener('click', function(e) {
-            e.preventDefault();
-            showNote(this);
-        });
-
+        // Event listeners with improved mobile support
+        let touchStartTime = 0;
+        
+        lily.addEventListener('touchstart', function(e) {
+            touchStartTime = Date.now();
+        }, { passive: true });
+        
         lily.addEventListener('touchend', function(e) {
             e.preventDefault();
-            showNote(this);
+            const touchDuration = Date.now() - touchStartTime;
+            
+            // Only trigger on short taps (not scrolls)
+            if (touchDuration < 500) {
+                showNote(this);
+            }
+        });
+        
+        lily.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Add small delay on mobile to prevent double-firing
+            if (window.innerWidth < 768) {
+                setTimeout(() => showNote(this), 50);
+            } else {
+                showNote(this);
+            }
         });
 
         lily.addEventListener('keydown', function(e) {
@@ -152,27 +184,52 @@
             lilyElement.classList.remove('clicked');
         }, 600);
         
-        // Set note text with typewriter effect
+        // Clear previous text and show modal
         noteText.textContent = '';
         noteModal.classList.add('active');
+        
+        // For mobile, add slight delay to ensure smooth modal transition
+        const delay = window.innerWidth < 768 ? 100 : 300;
         
         // Animate text appearance
         setTimeout(() => {
             typeText(note, noteText);
-        }, 300);
+        }, delay);
         
-        // Prevent body scroll
+        // Prevent body scroll and ensure modal is accessible
         document.body.style.overflow = 'hidden';
+        
+        // Focus management for accessibility
+        if (closeButton) {
+            setTimeout(() => {
+                closeButton.focus();
+            }, delay + 100);
+        }
     }
 
-    // Typewriter effect for notes
+    // Typewriter effect for notes - mobile-friendly version
     function typeText(text, element) {
+        // Clear any existing content first
+        element.textContent = '';
+        
+        // For mobile devices or if reduced motion is preferred, show text instantly
+        const isMobile = window.innerWidth < 768;
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        
+        if (isMobile || prefersReducedMotion) {
+            // Show text immediately on mobile to avoid rendering issues
+            element.textContent = text;
+            return;
+        }
+        
+        // Desktop typewriter effect
         let index = 0;
-        const speed = 50; // Milliseconds per character
+        const speed = 40; // Slightly faster for better UX
         
         function type() {
             if (index < text.length) {
-                element.textContent += text.charAt(index);
+                // Use textContent to avoid HTML encoding issues
+                element.textContent = text.substring(0, index + 1);
                 index++;
                 setTimeout(type, speed);
             }
