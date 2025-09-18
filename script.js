@@ -2,18 +2,27 @@
 (function() {
     'use strict';
 
-    // Love notes to display
+    // Love notes to display - fixed and expanded
     const loveNotes = [
         "If I could, I'd plant a thousand lilies just to see you smile.",
         "You're the softest part of my day, even when the world feels rough.",
         "Snoopy might have Woodstock, but I have you — and that's better than any cartoon ending.",
         "Every lily in this garden is just an excuse to say: I adore you.",
         "You make me feel like even ordinary days are worth remembering.",
-        "If I could sit beside you forever, I'd never need another dream."
+        "If I could sit beside you forever, I'd never need another dream.",
+        "Like Snoopy's faithful loyalty, my love for you never wavers.",
+        "You turn my world into a beautiful garden where love blooms endlessly.",
+        "In a field of ordinary flowers, you're my rare and precious lily.",
+        "Your love makes me feel like I can dance on clouds with Snoopy.",
+        "Every time you smile, angels learn new songs to sing.",
+        "You're my favorite hello and my hardest goodbye.",
+        "With you, every moment feels like a warm sunny day in the garden.",
+        "Your heart is the most beautiful flower in this entire garden.",
+        "Like Woodstock to Snoopy, you're my perfect companion in life."
     ];
 
-    // Lily emoji variations
-    const lilyTypes = ['🌸', '🌺', '🌷', '🌹', '🌻', '🌼', '🌻', '🌺'];
+    // Lily emoji variations - unique types only
+    const lilyTypes = ['🌸', '🌺', '🌷', '🌹', '🌻', '🌼', '🌿', '🌵'];
 
     // State
     let gardenArea;
@@ -21,6 +30,7 @@
     let noteText;
     let closeButton;
     let lilies = [];
+    let usedNotes = []; // Track used notes to avoid immediate repetition
 
     // Initialize when DOM is ready
     function init() {
@@ -48,9 +58,10 @@
         const numberOfLilies = getNumberOfLilies();
         console.log(`Creating ${numberOfLilies} lilies...`);
 
-        // Clear existing lilies
+        // Clear existing lilies and reset used notes
         gardenArea.innerHTML = '';
         lilies = [];
+        usedNotes = [];
 
         // Create lilies
         for (let i = 0; i < numberOfLilies; i++) {
@@ -67,6 +78,22 @@
         return 20;                      // Large desktop
     }
 
+    // Get a unique note that hasn't been used recently
+    function getUniqueNote() {
+        // If we've used most notes, reset the used array
+        if (usedNotes.length >= loveNotes.length - 2) {
+            usedNotes = [];
+        }
+
+        let noteIndex;
+        do {
+            noteIndex = Math.floor(Math.random() * loveNotes.length);
+        } while (usedNotes.includes(noteIndex));
+
+        usedNotes.push(noteIndex);
+        return noteIndex;
+    }
+
     // Create a single lily
     function createLily(index) {
         const lily = document.createElement('div');
@@ -79,8 +106,8 @@
         const lilyType = lilyTypes[Math.floor(Math.random() * lilyTypes.length)];
         lily.textContent = lilyType;
         
-        // Assign a random note
-        const noteIndex = Math.floor(Math.random() * loveNotes.length);
+        // Assign a unique note
+        const noteIndex = getUniqueNote();
         lily.dataset.noteIndex = noteIndex;
         
         // Add random animation delay for natural movement
@@ -109,7 +136,7 @@
         gardenArea.appendChild(lily);
         lilies.push(lily);
         
-        console.log(`Created lily ${index + 1} with note: "${loveNotes[noteIndex]}"`);
+        console.log(`Created lily ${index + 1} with note: "${loveNotes[noteIndex].substring(0, 30)}..."`);
     }
 
     // Show note modal
@@ -212,7 +239,8 @@
         },
         lilyCount: () => lilies.length,
         recreateGarden: setupGarden,
-        allNotes: loveNotes
+        allNotes: loveNotes,
+        usedNotes: () => usedNotes
     };
 
     // Initialize when DOM is loaded
