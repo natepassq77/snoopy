@@ -2,6 +2,13 @@
 (function() {
     'use strict';
 
+    // Prevent multiple initializations
+    if (window.gardenInitialized) {
+        console.log('Garden already initialized, skipping...');
+        return;
+    }
+    window.gardenInitialized = true;
+
     // Love notes to display - expanded with more sweet messages
     const loveNotes = [
         "If I could, I'd plant a thousand lilies just to see you smile.",
@@ -10,6 +17,7 @@
         "Every lily in this garden is just an excuse to say: I adore you.",
         "You make me feel like even ordinary days are worth remembering.",
         "If I could sit beside you forever, I'd never need another dream.",
+        "I'm madly in love with you Chloé.",
         "Like Snoopy's faithful loyalty, my love for you never wavers.",
         "You turn my world into a beautiful garden where love blooms endlessly.",
         "In a field of ordinary flowers, you're my rare and precious lily.",
@@ -23,7 +31,7 @@
         "If love had a color, it would be the exact shade of your eyes.",
         "You make my soul feel like it's floating on cotton candy clouds.",
         "Every day with you is like finding a four-leaf clover in my pocket.",
-        "You're my favorite notification, my sweetest daydream.",0
+        "You're my favorite notification, my sweetest daydream.",
         "If I could bottle your laugh, I'd keep it for rainy days.",
         "You make ordinary Tuesday mornings feel like Christmas morning.",
         "Your hugs are my favorite place to get lost in this whole world.",
@@ -33,8 +41,16 @@
         "If stars could talk, they'd all whisper your name at midnight.",
         "You make my heart skip like stones across a gentle lake.",
         "You're the bookmark in my favorite chapter of life.",
-        "I'm madly in love with you chloé ",
-        "Your love feels like warm cookies and Sunday morning sunshine."
+        "Your love feels like warm cookies and Sunday morning sunshine.",
+        "You're the missing piece I never knew my heart was searching for.",
+        "With you, every ordinary moment becomes an extraordinary memory.",
+        "You're my favorite song that I never get tired of hearing.",
+        "Like morning dew on petals, your love makes everything fresh and new.",
+        "You're the warm light that guides me through every dark day.",
+        "If I could write poetry, every line would be about loving you.",
+        "You make me believe in magic because you are magic.",
+        "Your smile is my favorite sunrise and my most peaceful sunset.",
+        "You're the sweetest dream I never want to wake up from."
     ];
 
     // Lily emoji variations - unique types only
@@ -46,7 +62,8 @@
     let noteText;
     let closeButton;
     let lilies = [];
-    let usedNotes = []; // Track used notes to avoid immediate repetition
+    let availableNotes = [...Array(loveNotes.length).keys()]; // All available note indices
+    let usedNotes = []; // Currently used notes
 
     // Initialize when DOM is ready
     function init() {
@@ -74,10 +91,10 @@
         const numberOfLilies = getNumberOfLilies();
         console.log(`Creating ${numberOfLilies} lilies...`);
 
-        // Clear existing lilies and reset used notes
+        // Clear existing lilies and reset notes
         gardenArea.innerHTML = '';
         lilies = [];
-        usedNotes = [];
+        resetNoteSystem();
 
         // Create lilies
         for (let i = 0; i < numberOfLilies; i++) {
@@ -85,28 +102,46 @@
         }
     }
 
+    // Reset the note distribution system
+    function resetNoteSystem() {
+        availableNotes = [...Array(loveNotes.length).keys()];
+        usedNotes = [];
+        // Shuffle available notes for better distribution
+        shuffleArray(availableNotes);
+    }
+
+    // Shuffle array helper function
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
     // Determine number of lilies based on screen size
     function getNumberOfLilies() {
         const width = window.innerWidth;
-        if (width < 480) return 8;      // Mobile
-        if (width < 768) return 12;     // Tablet
-        if (width < 1024) return 16;    // Small desktop
-        return 20;                      // Large desktop
+        const maxNotes = loveNotes.length;
+        
+        if (width < 480) return Math.min(8, maxNotes);      // Mobile
+        if (width < 768) return Math.min(12, maxNotes);     // Tablet
+        if (width < 1024) return Math.min(16, maxNotes);    // Small desktop
+        return Math.min(20, maxNotes);                      // Large desktop
     }
 
-    // Get a unique note that hasn't been used recently
+    // Get a unique note that hasn't been used
     function getUniqueNote() {
-        // If we've used most notes, reset the used array
-        if (usedNotes.length >= loveNotes.length - 2) {
-            usedNotes = [];
+        // If we've run out of available notes, reset the system
+        if (availableNotes.length === 0) {
+            console.log('Resetting note system - all notes used');
+            resetNoteSystem();
         }
 
-        let noteIndex;
-        do {
-            noteIndex = Math.floor(Math.random() * loveNotes.length);
-        } while (usedNotes.includes(noteIndex));
-
+        // Take the first available note (already shuffled)
+        const noteIndex = availableNotes.shift();
         usedNotes.push(noteIndex);
+        
+        console.log(`Assigned note ${noteIndex}: "${loveNotes[noteIndex].substring(0, 30)}..."`);
         return noteIndex;
     }
 
@@ -132,29 +167,31 @@
         
         // Event listeners with improved mobile support
         let touchStartTime = 0;
+        let touchMoved = false;
         
         lily.addEventListener('touchstart', function(e) {
             touchStartTime = Date.now();
+            touchMoved = false;
+        }, { passive: true });
+        
+        lily.addEventListener('touchmove', function(e) {
+            touchMoved = true;
         }, { passive: true });
         
         lily.addEventListener('touchend', function(e) {
             e.preventDefault();
             const touchDuration = Date.now() - touchStartTime;
             
-            // Only trigger on short taps (not scrolls)
-            if (touchDuration < 500) {
-                showNote(this);
+            // Only trigger on short taps (not scrolls) and if not moved
+            if (touchDuration < 500 && !touchMoved) {
+                setTimeout(() => showNote(this), 10);
             }
         });
         
         lily.addEventListener('click', function(e) {
             e.preventDefault();
-            // Add small delay on mobile to prevent double-firing
-            if (window.innerWidth < 768) {
-                setTimeout(() => showNote(this), 50);
-            } else {
-                showNote(this);
-            }
+            e.stopPropagation();
+            showNote(this);
         });
 
         lily.addEventListener('keydown', function(e) {
@@ -168,7 +205,7 @@
         gardenArea.appendChild(lily);
         lilies.push(lily);
         
-        console.log(`Created lily ${index + 1} with note: "${loveNotes[noteIndex].substring(0, 30)}..."`);
+        console.log(`Created lily ${index + 1} with note index ${noteIndex}`);
     }
 
     // Show note modal
@@ -176,7 +213,7 @@
         const noteIndex = parseInt(lilyElement.dataset.noteIndex);
         const note = loveNotes[noteIndex];
         
-        console.log(`Showing note: "${note}"`);
+        console.log(`Showing note ${noteIndex}: "${note}"`);
         
         // Add clicked animation to lily
         lilyElement.classList.add('clicked');
@@ -297,7 +334,9 @@
         lilyCount: () => lilies.length,
         recreateGarden: setupGarden,
         allNotes: loveNotes,
-        usedNotes: () => usedNotes
+        usedNotes: () => usedNotes,
+        availableNotes: () => availableNotes,
+        resetNotes: resetNoteSystem
     };
 
     // Initialize when DOM is loaded
@@ -311,3 +350,4 @@
     window.addEventListener('resize', throttle(handleResize, 250));
 
 })();
+
